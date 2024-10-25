@@ -1,0 +1,65 @@
+services:
+  auth-service:
+    container_name: auth-service
+    build:
+      context: auth-service/
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=postgres://user:password@auth-db:5432/authdb?sslmode=disable
+    depends_on:
+      - auth-db
+    networks:
+      - auth-network
+
+  auth-db:
+    container_name: auth-db
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=authdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    networks:
+      - auth-network
+
+  blog-service:
+    container_name: blog-service
+    build:
+      context: blog-service/
+      dockerfile: Dockerfile
+    environment:
+      -  DB_URL=postgres://user:password@blog-db:5432/blogdb?sslmode=false
+    ports:
+      - "8082:8080"
+    depends_on:
+      - blog-db
+    networks:
+      - blog-network
+  
+  blog-db:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=blogdb
+    ports:
+      - "5434:5432"
+    networks:
+      - blog-network
+
+
+networks:
+  auth-network:
+    driver: bridge
+  blog-network:
+    driver: bridge
+
+volumes:
+  auth-db-data:
+

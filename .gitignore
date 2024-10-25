@@ -1,0 +1,54 @@
+# golang
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Build directories
+/bin/
+/obj/
+
+# Go vendor directory
+/vendor/
+
+# IDE and editor specific files
+*.idea/
+*.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Go modules
+/blog-service/go.sum
+/blog-service/go.mod
+
+# Environment variable files
+.env
+.env.local
+
+# Log files
+*.log
+
+# Coverage reports
+*.cov
+*.out
+coverage.out
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Temporary IDE files
+*.swp
+*.swo
+*~
+*.orig
+*.iml
+
+# Operating system files
+.DS_Store
+Thumbs.db
+ehthumbs.db
