@@ -3,12 +3,21 @@ package repositories
 import (
 	"blog-service/models"
 	"errors"
+	"time"
 
 	"context"
 	"database/sql"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+)
+
+var (
+	ErrBlogNotFound = errors.New("blog not found")
+
+	ErrInvalidBlog = errors.New("invalid blog data")
+
+	ErrDBOperation = errors.New("database operation failed")
 )
 
 // BlogRepository  is a repository for blog
@@ -18,8 +27,10 @@ type BlogRepository interface {
 	Delete(ctx context.Context, blog *models.Blog) error
 	GetByID(ctx context.Context, blogId int64) (*models.Blog, error)
 	List(ctx context.Context, blog *[]models.Blog, limit int, offset int) (*[]models.Blog, error)
+	GetByAuthor(ctx context.Context, authorID uint, limit, offset int) (*[]models.Blog, error)
 }
 
+// blogRepository is a concrete implementation of BlogRepository
 type blogRepository struct {
 	db  *sql.DB
 	log *logrus.Logger
