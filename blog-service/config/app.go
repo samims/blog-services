@@ -1,7 +1,7 @@
 package config
 
 import (
-	"blog-backend/blog-service/constants"
+	"blog-service/constants"
 
 	"github.com/spf13/viper"
 )

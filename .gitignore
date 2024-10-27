@@ -52,3 +52,5 @@ coverage.out
 .DS_Store
 Thumbs.db
 ehthumbs.db
+.env.*
+!.env.example

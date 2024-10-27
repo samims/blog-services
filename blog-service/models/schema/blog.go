@@ -7,12 +7,12 @@ import (
 
 // Blog Post represents a blog post schema
 type Blog struct {
-	ID       uint      `json:"id"`
-	Title    string    `json:"title"`
-	Content  string    `json:"content"`
-	Author   uint      `json:"author"`
-	CreateAt time.Time `json:"create_at"`
-	UpdateAt time.Time `json:"update_at"`
+	ID        uint      `json:"id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	Author    uint      `json:"author"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type BlogList []*Blog
@@ -25,8 +25,8 @@ func (b *Blog) ToResponse() *resp.BlogDetailResp {
 		Title:    b.Title,
 		Content:  b.Content,
 		Author:   b.Author,
-		CreateAt: b.CreateAt.Format(time.RFC3339),
-		UpdateAt: b.UpdateAt.Format(time.RFC3339),
+		CreateAt: b.CreatedAt.Format(time.RFC3339),
+		UpdateAt: b.UpdatedAt.Format(time.RFC3339),
 	}
 }
 

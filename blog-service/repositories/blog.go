@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"blog-service/models"
+	"blog-service/models/schema"
 	"errors"
 	"time"
 
@@ -22,18 +22,23 @@ var (
 
 // BlogRepository  is a repository for blog
 type BlogRepository interface {
-	Create(ctx context.Context, blog *models.Blog) error
-	Update(ctx context.Context, blog *models.Blog) error
-	Delete(ctx context.Context, blog *models.Blog) error
-	GetByID(ctx context.Context, blogId int64) (*models.Blog, error)
-	List(ctx context.Context, blog *[]models.Blog, limit int, offset int) (*[]models.Blog, error)
-	GetByAuthor(ctx context.Context, authorID uint, limit, offset int) (*[]models.Blog, error)
+	Create(ctx context.Context, blog *schema.Blog) error
+	Update(ctx context.Context, blog *schema.Blog) error
+	Delete(ctx context.Context, blog *schema.Blog) error
+	GetByID(ctx context.Context, blogId int64) (*schema.Blog, error)
+	List(ctx context.Context, blog *[]schema.Blog, limit int, offset int) (*[]schema.Blog, error)
+	GetByAuthor(ctx context.Context, authorID uint, limit, offset int) (*[]schema.Blog, error)
 }
 
 // blogRepository is a concrete implementation of BlogRepository
 type blogRepository struct {
 	db  *sql.DB
 	log *logrus.Logger
+}
+
+func (r *blogRepository) GetByAuthor(ctx context.Context, authorID uint, limit, offset int) (*[]schema.Blog, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 // NewBlogRepository returns a new instance of BlogRepository
@@ -44,30 +49,29 @@ func NewBlogRepository(db *sql.DB, log *logrus.Logger) BlogRepository {
 	}
 }
 
-// Create creates  a new blog using raw SQL .Exec()
-func (r *blogRepository) Create(ctx context.Context, blog *models.Blog) error {
-	res, err := r.db.Exec(
-		"INSERT INTO blogs (title, content, created_at, updated_at) VALUES  (?, ?, ?, ?)",
-		blog.Title,
-		blog.Content,
-		blog.CreatedAt,
-		blog.UpdatedAt,
-	)
-	if err != nil {
-		r.log.Errorf("Error creating blog: %v", err)
-		return err
+// Create inserts  a new blog into the database
+func (r *blogRepository) Create(ctx context.Context, blog *schema.Blog) error {
+	// Create a new transaction
+	if blog == nil {
+		return ErrInvalidBlog
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		r.log.Errorf("Error getting last insert id: %v", err)
-		return err
-	}
-	blog.ID = uint(id)
+
+	//query := `
+	//INSERT INTO blogs (title, content, author_id, created_at, updated_at)
+	//VALUES ($1, $2, $3, $4, $5)
+	//RETURNING id`
+
+	// set the timestamps
+	now := time.Now().UTC()
+	blog.CreatedAt = now
+	blog.UpdatedAt = now
+
 	return nil
+
 }
 
 // Update ...
-func (r *blogRepository) Update(ctx context.Context, blog *models.Blog) error {
+func (r *blogRepository) Update(ctx context.Context, blog *schema.Blog) error {
 	_, err := r.db.Exec(
 		"UPDATE blogs SET title = ?, content = ?, updated_at = ? WHERE id = ?",
 		blog.Title,
@@ -84,7 +88,7 @@ func (r *blogRepository) Update(ctx context.Context, blog *models.Blog) error {
 }
 
 // Delete fetches  a blog by ID and deletes it
-func (r *blogRepository) Delete(ctx context.Context, blog *models.Blog) error {
+func (r *blogRepository) Delete(ctx context.Context, blog *schema.Blog) error {
 	query := "DELETE FROM blogs WHERE id = $1"
 
 	// execute  the query
@@ -108,8 +112,8 @@ func (r *blogRepository) Delete(ctx context.Context, blog *models.Blog) error {
 }
 
 // GetByID fetches  a blog by its ID.
-func (r *blogRepository) GetByID(ctx context.Context, blogId int64) (*models.Blog, error) {
-	var blog models.Blog
+func (r *blogRepository) GetByID(ctx context.Context, blogId int64) (*schema.Blog, error) {
+	var blog schema.Blog
 
 	// Prepare the query
 	query := "SELECT id, title, content, created_at, updated_at FROM blogs WHERE id = $1"
@@ -128,8 +132,8 @@ func (r *blogRepository) GetByID(ctx context.Context, blogId int64) (*models.Blo
 }
 
 // List fetches  all blogs
-func (r *blogRepository) List(ctx context.Context, blog *[]models.Blog, limit int, offset int) (*[]models.Blog, error) {
-	var blogs []models.Blog
+func (r *blogRepository) List(ctx context.Context, blog *[]schema.Blog, limit int, offset int) (*[]schema.Blog, error) {
+	var blogs []schema.Blog
 
 	queryStr := `SELECT id, title, content, author, created_at from blogs ORDER BY created_at  DESC LIMIT $1 OFFSET $2`
 	rows, err := r.db.Query(queryStr, limit, offset)
@@ -142,7 +146,7 @@ func (r *blogRepository) List(ctx context.Context, blog *[]models.Blog, limit in
 	defer rows.Close()
 	// scan  rows and  append to blog slice
 	for rows.Next() {
-		var blog models.Blog
+		var blog schema.Blog
 		err = rows.Scan(
 			&blog.ID,
 			&blog.Title,
