@@ -8,7 +8,7 @@ import (
 
 // InitUserRouter  initializes the user router
 func InitUserRouter(ctrl controllers.Controller) *http.ServeMux {
-	userCtrl := ctrl.UserController()
+	userCtrl := ctrl.AuthController()
 
 	loginPath := fmt.Sprintf("%s /login", http.MethodPost)
 	registerPath := fmt.Sprintf("%s /register", http.MethodPost)
