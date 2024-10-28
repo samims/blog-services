@@ -7,8 +7,8 @@ import (
 
 // UserRepository is a repository for user data
 type UserRepository interface {
-	Create(user models.User) error
-	GetByUserName(userId string) (models.User, error)
+	Create(user *models.User) error
+	GetByUserEmail(email string) (models.User, error)
 }
 
 // userRepository is a concrete implementation of UserRepository
