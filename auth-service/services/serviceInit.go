@@ -1,6 +1,9 @@
 package services
 
-import "auth-service/repositories"
+import (
+	"auth-service/config"
+	"auth-service/repositories"
+)
 
 // Services is an interface  for services
 type Services interface {
@@ -18,11 +21,10 @@ func (s *svc) UserService() UserService {
 }
 
 // NewServices function   to create a new instance of Services
-func NewServices(repo repositories.Repository) Services {
+func NewServices(repo repositories.Repository, conf config.Configuration) Services {
 	// repo and service init
 	userRepo := repo.UserRepository()
-	uSvc := NewUserService(userRepo)
-
+	uSvc := NewUserService(userRepo, conf)
 	return &svc{
 		uSvc: uSvc,
 	}
