@@ -9,6 +9,7 @@ import (
 type AppConfig interface {
 	GetBuildEnv() string
 	GetSecretKey() string
+	GetPort() string
 }
 
 // appConfig for app
@@ -25,6 +26,11 @@ func (ac *appConfig) GetBuildEnv() string {
 func (ac *appConfig) GetSecretKey() string {
 	ac.env.AutomaticEnv()
 	return ac.env.GetString(constants.SecretKey)
+}
+
+func (ac *appConfig) GetPort() string {
+	ac.env.AutomaticEnv()
+	return ac.env.GetString(constants.AppPort)
 }
 
 func NewAppConfig(env *viper.Viper) AppConfig {

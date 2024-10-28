@@ -1,8 +1,11 @@
 package constants
 
 const (
-	SecretKey          = "SECRET_KEY"
-	BuildEnv           = "BUILD_ENV"
+	AppDebug  = "APP_DEBUG"
+	SecretKey = "SECRET_KEY"
+	BuildEnv  = "BUILD_ENV"
+	AppPort   = "APP_PORT"
+
 	PostgresHost       = "POSTGRES_HOST"
 	PostgresPort       = "POSTGRES_PORT"
 	PostgresUser       = "POSTGRES_USER"

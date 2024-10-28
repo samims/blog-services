@@ -1,8 +1,10 @@
 package main
 
 import (
+	"auth-service/constants"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -24,7 +26,8 @@ func main() {
 	}
 	defer dbConn.Close()
 
-	//repo and service intialization
+	port := os.Getenv(constants.AppPort)
+	//repo and service initialization
 	repo := repositories.NewRepository(dbConn)
 	svcs := services.NewServices(repo)
 	ctrl := controllers.NewController(svcs)
@@ -32,7 +35,7 @@ func main() {
 	r := router.InitUserRouter(ctrl)
 
 	// create and start the HTTP server
-	srv := createServer(":8080", r)
+	srv := createServer(fmt.Sprintf(":%s", port), r)
 
 	go startServer(srv)
 
@@ -65,12 +68,12 @@ func shutdownServer(srv *http.Server) {
 	//  wait for the signal
 	<-stop
 
-	log.Println("shuttingdown server ...")
+	log.Println("shutting down server ...")
 
 	//  create  a new context
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-	//  Attempt to gracefully shutdown the server
+	//  Attempt to gracefully shut down the server
 	defer cancel()
 	err := srv.Shutdown(ctx)
 	if err != nil {

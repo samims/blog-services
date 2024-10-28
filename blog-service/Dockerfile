@@ -1,6 +1,9 @@
 # Use the official Golang image as a build stage
 FROM golang:1.23 AS builder
 
+RUN apt-get update && apt-get install -y postgresql-client
+
+
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
@@ -25,8 +28,10 @@ WORKDIR /root/
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/main .
 
+
+
 # Expose port 8080 to the outside world
-EXPOSE 8080
+EXPOSE 8082
 
 # Command to run the executable
 CMD ["./main"]

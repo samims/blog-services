@@ -8,8 +8,6 @@ services:
       - "8081:8080"
     env_file:
       - auth-service/.env
-    environment:
-      - DB_URL=postgres://user:password@auth-db:5432/authdb?sslmode=disable
     depends_on:
       - auth-db
     networks:
@@ -21,10 +19,6 @@ services:
     restart: always
     env_file:
       - auth-service/.env
-#    environment:
-#      - POSTGRES_USER=${DB_USER}
-#      - POSTGRES_PASSWORD=${DB_PASSWORD}
-#      - POSTGRES_DB=${DB_NAME}
     ports:
       - "5433:5432"
     volumes:
