@@ -15,7 +15,7 @@ services:
 
   auth-db:
     container_name: auth-db
-    image: postgres:latest
+    image: postgres:17-alpine
     restart: always
     env_file:
       - auth-service/.env
@@ -42,7 +42,7 @@ services:
   
   blog-db:
     container_name: blog-db
-    image: postgres:latest
+    image: postgres:17-alpine
     restart: always
     env_file:
       - blog-service/.env

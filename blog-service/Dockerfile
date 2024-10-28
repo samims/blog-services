@@ -1,7 +1,5 @@
 # Use the official Golang image as a build stage
-FROM golang:1.23 AS builder
-
-RUN apt-get update && apt-get install -y postgresql-client
+FROM golang:1.23-alpine AS builder
 
 
 # Set the Current Working Directory inside the container
@@ -20,8 +18,8 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/server
 
 # Start a new stage from scratch
-FROM alpine:latest  
-
+#FROM alpine:latest
+FROM scratch
 # Set the Current Working Directory inside the container
 WORKDIR /root/
 
