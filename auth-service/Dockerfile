@@ -43,6 +43,7 @@ while ! nc -z "$1" "$2"; do\n\
 done\n\
 echo "$1:$2 is available"' > /usr/local/bin/wait-for \
     && chmod +x /usr/local/bin/wait-for
+
 # Copy the entrypoint script
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh

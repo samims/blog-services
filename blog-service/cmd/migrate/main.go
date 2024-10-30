@@ -12,12 +12,18 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 func main() {
+	l := logrus.StandardLogger()
+	l.Info("----------------------")
+	l.Infof("starting migrations.....")
+	l.Info("----------------------")
+
 	if err := run(); err != nil {
-		log.Fatalf("Error: %v", err)
+		l.Fatalf("Error: %v", err)
 	}
 }
 
@@ -26,18 +32,20 @@ func run() error {
 	flag.Parse()
 	cfg := config.NewPostgresConfig(viper.New())
 
-	dbURL := cfg.ConnectionURL()
+	dbURL := cfg.ConnectionURLWithScheme()
+	// set scheme to dbURL
 
 	m, err := migrate.New(fmt.Sprintf("file://%s", *migrationDir), dbURL)
 	if err != nil {
 		return fmt.Errorf("failed to create migrate instance: %w", err)
 	}
+	log.Println("################\nmigrating...\n#####################")
 
 	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return fmt.Errorf("failed to apply migrations: %w", err)
 	}
 
-	log.Println("Migrations completed successfully")
+	log.Println("Migrations completed successfully...")
 
 	if err := printDatabaseSchema(dbURL); err != nil {
 		log.Printf("Warning: Failed to print database schema: %v", err)
@@ -51,7 +59,12 @@ func printDatabaseSchema(dbURL string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Printf("Failed to close database connection: %v", err)
+		}
+	}(db)
 
 	tables, err := getTables(db)
 	if err != nil {
@@ -109,14 +122,19 @@ type column struct {
 
 func getColumns(db *sql.DB, tableName string) ([]column, error) {
 	rows, err := db.Query(`
-		SELECT column_name, data_type 
+		SELECT columns.column_name, columns.data_type 
 		FROM information_schema.columns 
-		WHERE table_schema = 'public' AND table_name = $1
+		WHERE table_schema = 'public' AND columns.table_name = $1
 	`, tableName)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Printf(" Warning: Failed to close rows: %v", err)
+		}
+	}(rows)
 
 	var columns []column
 	for rows.Next() {
