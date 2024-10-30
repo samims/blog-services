@@ -1,44 +1,36 @@
 package db
 
 import (
-	"auth-service/constants"
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
+
+	"auth-service/constants"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
 func Connect() (*sql.DB, error) {
 	// Define the connection string
-	//connStr := "postgresql://postgres@auth-service:5432/auth-service?sslmode=false"
-	// read from env
 
 	dbHost := os.Getenv(constants.PostgresHost)
 	dbPort := os.Getenv(constants.PostgresPort)
 	dbUser := os.Getenv(constants.PostgresUser)
 	dbPass := os.Getenv(constants.PostgresPasswd)
 	dbName := os.Getenv(constants.PostgresDBName)
-	//dbSSLMode := os.Getenv(constants.DatabaseSSLMode)
+	dbSSLMode := os.Getenv(constants.DatabaseSSLMode)
 
-	//connStr := fmt.Sprintf(
-	//	"%s:%s@%s:%s/%s?sslmode=%s",
-	//	dbUser,
-	//	dbPass,
-	//	dbHost,
-	//	dbPort,
-	//	dbName,
-	//	dbSSLMode,
-	//)
 	pgInfo := fmt.Sprintf(
 		"host=%s port=%s user=%s "+
-			"password=%s dbname=%s sslmode=disable",
+			"password=%s dbname=%s sslmode=%s",
 		dbHost,
 		dbPort,
 		dbUser,
 		dbPass,
-		dbName)
+		dbName,
+		dbSSLMode,
+	)
 
 	log.Println("Connecting to database auth service", pgInfo)
 
