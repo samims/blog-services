@@ -38,9 +38,10 @@ func main() {
 	}
 
 	log.Println("Migrations completed successfully")
+	sqlDB, err := sql.Open("postgres", dbURL)
 
 	// Print tables after migration
-	if err := printTables(dbURL); err != nil {
+	if err := printTables(sqlDB); err != nil {
 		log.Printf("Error printing tables: %v", err)
 	}
 }
@@ -66,11 +67,7 @@ func getConnectionURL() string {
 
 }
 
-func printTables(dbURL string) error {
-	db, err := sql.Open("postgres", dbURL)
-	if err != nil {
-		return fmt.Errorf("error opening database: %w", err)
-	}
+func printTables(db *sql.DB) error {
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {

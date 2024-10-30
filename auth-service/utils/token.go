@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"auth-service/constants"
-
 	"errors"
+
+	"auth-service/constants"
 
 	"github.com/golang-jwt/jwt"
 )
@@ -11,6 +11,15 @@ import (
 type TokenClaims struct {
 	jwt.StandardClaims
 	Email string `json:"email"`
+}
+
+func NewTokenClaims(email string, issuedAt int64) TokenClaims {
+	return TokenClaims{
+		StandardClaims: jwt.StandardClaims{
+			IssuedAt: issuedAt,
+		},
+		Email: email,
+	}
 }
 
 // GenerateTokenWithCustomClaims  generates a token with custom claims
@@ -24,7 +33,7 @@ func GenerateTokenWithCustomClaims(claims TokenClaims, secret string, expiresAt 
 	// sign the token with secret  key
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "", err
+		return "", ErrSigningToken
 	}
 	return tokenString, nil
 

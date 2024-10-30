@@ -1,8 +1,8 @@
 package main
 
 import (
-	"auth-service/constants"
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -11,11 +11,15 @@ import (
 	"os/signal"
 	"time"
 
+	"auth-service/config"
+	"auth-service/constants"
 	"auth-service/controllers"
 	"auth-service/db"
 	"auth-service/repositories"
 	"auth-service/router"
 	"auth-service/services"
+
+	"github.com/spf13/viper"
 )
 
 func main() {
@@ -24,21 +28,35 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect to the database: %v", err)
 	}
-	defer dbConn.Close()
+	defer func(dbConn *sql.DB) {
+		err := dbConn.Close()
+		if err != nil {
+			log.Fatalf("failed to close the database connection: %v", err)
+		}
+	}(dbConn)
+
+	// loading env
+	env := viper.New()
+	appConf := config.NewAppConfig(env)
+	conf := config.NewConfiguration(appConf)
+	conf.Load(env)
 
 	port := os.Getenv(constants.AppPort)
-	//repo and service initialization
+
+	// repo and service initialization
 	repo := repositories.NewRepository(dbConn)
-	svcs := services.NewServices(repo)
-	ctrl := controllers.NewController(svcs)
+	svc := services.NewServices(repo, conf)
+	ctrl := controllers.NewController(svc)
 
 	r := router.InitUserRouter(ctrl)
 
 	// create and start the HTTP server
 	srv := createServer(fmt.Sprintf(":%s", port), r)
 
+	// start the project asynchronously
 	go startServer(srv)
 
+	// shutdown
 	shutdownServer(srv)
 
 }
