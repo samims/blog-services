@@ -39,7 +39,7 @@ services:
       - blog-db
     networks:
       - blog-network
-  
+
   blog-db:
     container_name: blog-db
     image: postgres:17-alpine
@@ -47,7 +47,7 @@ services:
     env_file:
       - blog-service/.env
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - blog-db-data:/var/lib/postgresql/data
     networks:

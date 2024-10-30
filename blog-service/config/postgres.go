@@ -1,8 +1,9 @@
 package config
 
 import (
-	"blog-service/constants"
 	"fmt"
+
+	"blog-service/constants"
 
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
@@ -17,6 +18,7 @@ type PostgresConfig interface {
 	SSLMode() string
 
 	ConnectionURL() string
+	ConnectionURLWithScheme() string
 }
 type postgresConfig struct {
 	env *viper.Viper
@@ -60,27 +62,8 @@ func (cfg *postgresConfig) SSLMode() string {
 
 func (cfg *postgresConfig) ConnectionURL() string {
 	cfg.env.AutomaticEnv()
-	//connectionURL := fmt.Sprintf(
-	//	`%s:%s@%s:%s/%s?sslmode=%s`,
-	//	cfg.User(),
-	//	cfg.Password(),
-	//	cfg.Host(),
-	//	cfg.Port(),
-	//	cfg.Database(),
-	//	cfg.SSLMode(),
-	//)
-	pgInfo := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		cfg.Host(),
-		//cfg.Port(),
-		"5432",
-		cfg.User(),
-		cfg.Password(),
-		cfg.Password(),
-		cfg.SSLMode(),
-	)
 
-	pgInfo = fmt.Sprintf(
+	pgInfo := fmt.Sprintf(
 		"host=%s port=%s user=%s "+
 			"password=%s dbname=%s sslmode=disable",
 		cfg.Host(),
@@ -90,6 +73,18 @@ func (cfg *postgresConfig) ConnectionURL() string {
 		cfg.Database())
 
 	return pgInfo
+}
+
+// ConnectionURLWithScheme returns the connection string in URL format with postgres:// scheme
+func (cfg *postgresConfig) ConnectionURLWithScheme() string {
+	cfg.env.AutomaticEnv()
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		cfg.User(),
+		cfg.Password(),
+		cfg.Host(),
+		cfg.Port(),
+		cfg.Database())
 }
 
 func NewPostgresConfig(env *viper.Viper) PostgresConfig {

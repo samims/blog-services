@@ -1,10 +1,11 @@
 package db
 
 import (
-	"blog-service/config"
 	"context"
 	"database/sql"
 	"fmt"
+
+	"blog-service/config"
 
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
@@ -44,6 +45,7 @@ func (pc *postgresConnector) Connect(ctx context.Context) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database %w", err)
 	}
+	pc.log.Infof("Successfully opened db instance postgres at %s", connStr)
 
 	if err = db.PingContext(ctx); err != nil {
 		closeErr := db.Close()
