@@ -1,15 +1,16 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"net/http"
+
 	"blog-service/config"
 	"blog-service/controllers"
 	"blog-service/db"
 	"blog-service/logger"
 	"blog-service/repositories"
 	"blog-service/services"
-	"context"
-	"fmt"
-	"net/http"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
 	"github.com/sirupsen/logrus"
@@ -49,8 +50,9 @@ func main() {
 		w.Write([]byte("pong"))
 	})
 
+	logrus.Infof("Starting server on port :%s", conf.GetPort())
 	// run the server
-	err = http.ListenAndServe(fmt.Sprintf(":%s", conf.GetBuildEnv()), r)
+	err = http.ListenAndServe(fmt.Sprintf(":%s", conf.GetPort()), r)
 	if err != nil {
 		l.Fatal(err)
 		return
