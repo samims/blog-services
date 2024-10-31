@@ -1,13 +1,15 @@
 package utils
 
 import (
-	"blog-service/models"
 	"encoding/json"
 	"net/http"
+
+	"blog-service/models/request"
+	"blog-service/models/resp"
 )
 
 func RespondWithSuccess(w http.ResponseWriter, code int, payload interface{}) {
-	response := models.NewBaseResponse()
+	response := resp.NewBaseResponse()
 	response.Data = payload
 
 	w.Header().Set("Content-Type", "application/json")
@@ -21,7 +23,7 @@ func RespondWithSuccess(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func RespondWithError(w http.ResponseWriter, code int, message string) {
-	response := models.NewBaseResponse()
+	response := resp.NewBaseResponse()
 	response.Success = false
 	response.Error = message
 
@@ -35,14 +37,15 @@ func RespondWithError(w http.ResponseWriter, code int, message string) {
 }
 
 // CreatePageMetadata creates PageMetadata from request and total items
-func CreatePageMetadata(req models.BaseRequest, totalItems int64) models.PageMetaData {
+func CreatePageMetadata(req request.PaginationReq, totalItems int64) resp.PaginationResp {
 	totalPages := (int(totalItems) + req.PageSize - 1) / req.PageSize
-
-	return models.PageMetaData{
-		CurrentPage: req.Page,
-		PageSize:    req.PageSize,
-		TotalCount:  totalItems,
-		TotalPages:  totalPages,
-		HasNext:     req.Page < totalPages,
+	return resp.PaginationResp{
+		CurrentPage:    req.Page,
+		PageSize:       req.PageSize,
+		TotalPage:      totalPages,
+		TotalItemCount: totalItems,
+		HasMore:        req.Page < totalPages,
+		IsFirstPage:    req.Page == 1,
+		IsLastPage:     req.Page == totalPages,
 	}
 }

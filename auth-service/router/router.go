@@ -1,9 +1,10 @@
 package router
 
 import (
-	"auth-service/controllers"
 	"fmt"
 	"net/http"
+
+	"auth-service/controllers"
 )
 
 // InitUserRouter  initializes the user router

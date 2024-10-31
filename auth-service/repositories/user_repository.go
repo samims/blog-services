@@ -1,8 +1,9 @@
 package repositories
 
 import (
-	"auth-service/models"
 	"database/sql"
+
+	"auth-service/models"
 )
 
 // UserRepository is a repository for user data
@@ -22,20 +23,30 @@ func NewUserRepository(db *sql.DB) UserRepository {
 }
 
 // Create creates a new user in the database
-func (r userRepository) Create(user models.User) error {
-	_, err := r.DB.Exec("INSERT INTO users (id, username,  password) VALUES ($1, $2, $3, $4)", user.ID, user.Username, user.Password)
-	return err
+func (r userRepository) Create(user *models.User) error {
+	row := r.DB.QueryRow(
+		`INSERT INTO users (email, password, first_name, last_name) 
+				VALUES ($1, $2, $3, $4)
+				RETURNING id`,
+		user.Email,
+		user.Password,
+		user.FirstName,
+		user.LastName,
+	).Scan(&user.ID)
+	if row == nil {
+		return row
+	}
+	return nil
 }
 
-// GetByUserName returns a user by their username
-func (r userRepository) GetByUserName(username string) (models.User, error) {
+// GetByUserEmail returns a user by their username
+func (r userRepository) GetByUserEmail(email string) (models.User, error) {
 	var user models.User
 	err := r.DB.QueryRow(
-		"SELECT id, username FROM users WHERE username = $1 ",
-		username,
+		"SELECT id, first_name username FROM users WHERE email = $1 ",
+		email,
 	).Scan(
 		&user.ID,
-		&user.Username,
 	)
 	return user, err
 }
