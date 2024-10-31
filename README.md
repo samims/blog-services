@@ -1,131 +1,171 @@
-Blog Backend Microservices
-A microservices-based backend system written in Go, consisting of authentication and blog services.
+# Blog Backend Microservices
 
-Quick Start
-Prerequisites
-Docker
-Docker Compose
-Go 1.23+
-Running the Application
-Clone the repository
-bash
-Insert Code
-Edit
-Copy code
-git clone https://github.com/yourusername/blog-backend.git
-cd blog-backend
-Start all services
-bash
-Insert Code
-Edit
-Copy code
+A robust, scalable backend system for a blogging platform, built with Go and following microservices architecture.
+
+## 🚀 Features
+
+- User authentication and authorization
+- Blog post CRUD operations
+- Scalable microservices architecture
+- PostgreSQL database integration
+- Docker containerization
+
+## 🛠 Tech Stack
+
+- Go 1.23+
+- PostgreSQL
+- Docker & Docker Compose
+- JWT for authentication
+- Golang Migrate for database migrations
+
+## 🏗 Architecture
+
+The system consists of two main microservices:
+
+1. **Auth Service** (Port: 8080)
+    - Handles user registration, login, and token management
+    - Connected to Auth Database (Port: 5433)
+
+2. **Blog Service** (Port: 8082)
+    - Manages blog post operations (create, read, update, delete)
+    - Connected to Blog Database (Port: 5434)
+
+## 🚦 Getting Started
+
+### Prerequisites
+
+- Docker
+- Docker Compose
+- Go 1.23+
+
+### Running the Application
+
+1. Clone the repository:
+
+    ```shell
+    git clone https://github.com/yourusername/blog-backend.git cd blog-backend
+    ```
+
+2. Start all services 
+```shell
 docker-compose up -d
-Stop services
-bash
-Insert Code
-Edit
-Copy code
+```
+
+3. Stop all services
+```shell
 docker-compose down
-Architecture
-Services
-Auth Service (Port: 8080)
+```
 
-Handles user authentication
-JWT token management
-User management
-Auth Database (Port: 5433)
 
-PostgreSQL database
-Stores user data
-Credentials:
-DB: authdb
-User: user
-Password: password
-Blog Service (Port: 8082)
 
-Manages blog posts
-Handles blog operations
-Requires authentication
-Blog Database (Port: 5434)
+## 📡 API Endpoints
 
-PostgreSQL database
-Stores blog data
-Credentials:
-DB: blogdb
-User: user
-Password: password
-Project Structure
-Insert Code
-Edit
-Copy code
-.
-├── auth-service/
-│   ├── cmd/
-│   ├── internal/
-│   ├── Dockerfile
-│   └── go.mod
-├── blog-service/
-│   ├── cmd/
-│   ├── internal/
-│   ├── Dockerfile
-│   └── go.mod
-└── docker-compose.yml
-API Documentation
-Auth Service Endpoints
-POST /api/auth/register - Register new user
-POST /api/auth/login - User login
-GET /api/auth/verify - Verify JWT token
-Blog Service Endpoints
-GET /api/posts - Get all posts
-POST /api/posts - Create new post
-GET /api/posts/{id} - Get specific post
-PUT /api/posts/{id} - Update post
-DELETE /api/posts/{id} - Delete post
-Environment Variables
-Auth Service
-env
-Insert Code
-Edit
-Copy code
-DB_HOST=auth-db
-DB_PORT=5432
-DB_USER=user
-DB_PASSWORD=password
-DB_NAME=authdb
-Blog Service
-env
-Insert Code
-Edit
-Copy code
-DB_HOST=blog-db
-DB_PORT=5432
-DB_USER=user
-DB_PASSWORD=password
-DB_NAME=blogdb
-Development
-Tech Stack
-Go 1.23
-PostgreSQL
-Docker & Docker Compose
-JWT for authentication
-RESTful API
-Building Individual Services
-bash
-Insert Code
-Edit
-Copy code
-# Build auth service
+### Auth Service
+
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - User login
+- `GET /api/auth/verify` - Verify JWT token
+
+### Blog Service
+
+- `GET /api/posts` - Get all posts
+- `POST /api/posts` - Create a new post
+- `GET /api/posts/{id}` - Get a specific post
+- `PUT /api/posts/{id}` - Update a post
+- `DELETE /api/posts/{id}` - Delete a post
+
+## 🧪 Running Tests
+
+To run tests for each service:
+# Blog Backend Microservices
+
+A robust, scalable backend system for a blogging platform, built with Go and following microservices architecture.
+
+## 🚀 Features
+
+- User authentication and authorization
+- Blog post CRUD operations
+- Scalable microservices architecture
+- PostgreSQL database integration
+- Docker containerization
+
+## 🛠 Tech Stack
+
+- Go 1.23+
+- PostgreSQL
+- Docker & Docker Compose
+- JWT for authentication
+- Golang Migrate for database migrations
+
+## 🏗 Architecture
+
+The system consists of two main microservices:
+
+1. **Auth Service** (Port: 8080)
+    - Handles user registration, login, and token management
+    - Connected to Auth Database (Port: 5433)
+
+2. **Blog Service** (Port: 8082)
+    - Manages blog post operations (create, read, update, delete)
+    - Connected to Blog Database (Port: 5434)
+
+## 🚦 Getting Started
+
+### Prerequisites
+
+- Docker
+- Docker Compose
+- Go 1.23+
+
+### Running the Application
+
+1. Clone the repository:
+
+    ```shell
+    git clone https://github.com/yourusername/blog-backend.git cd blog-backend
+    ```
+
+2. Start all services
+```shell
+docker-compose up -d
+```
+
+3. Stop all services
+```shell
+docker-compose down
+```
+
+
+
+## 📡 API Endpoints
+
+### Auth Service
+
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - User login
+- `GET /api/auth/verify` - Verify JWT token
+
+### Blog Service
+
+- `GET /api/posts` - Get all posts
+- `POST /api/posts` - Create a new post
+- `GET /api/posts/{id}` - Get a specific post
+- `PUT /api/posts/{id}` - Update a post
+- `DELETE /api/posts/{id}` - Delete a post
+
+## 🧪 Running Tests
+
+To run tests for each service:
+```shell
 cd auth-service
-docker build -t auth-service .
+go test ./...
 
-# Build blog service
-cd blog-service
-docker build -t blog-service .
-Useful Docker Commands
-bash
-Insert Code
-Edit
-Copy code
+cd ../blog-service
+go test ./...
+```
+
+###  Useful Docker Commands
+```shell
 # View logs
 docker-compose logs
 
@@ -141,11 +181,37 @@ docker-compose up --build auth-service
 
 # Check status
 docker-compose ps
-Contributing
-Fork the repository
-Create your feature branch (git checkout -b feature/amazing-feature)
-Commit your changes (git commit -m 'Add some amazing feature')
-Push to the branch (git push origin feature/amazing-feature)
-Open a Pull Request
-License
-This project is licensed under the MIT License - see the LICENSE file for details
+```
+
+## 📊 Monitoring and Logging
+Logs are available through Docker Compose logs
+Consider integrating Prometheus and Grafana for advanced monitoring
+
+## 🔒 Security Considerations
+All endpoints are secured with JWT authentication
+Passwords are hashed before storage
+HTTPS is recommended for production deployments
+
+
+## 🚀 Deployment
+
+1. Ensure all environment variables are properly set 
+2. Build and push Docker images to your container registry 
+3. Deploy using Docker Compose or Kubernetes (sample manifests will be provided later in /k8s)
+
+
+## 🔄 Continuous Integration / Continuous Deployment
+GitHub Actions workflows are provided in .github/workflows
+Automated testing and building on push to main branch
+Automated deployment to staging environment on successful build
+
+## 🔄 Continuous Integration / Continuous Deployment
+GitHub Actions workflows are provided in .github/workflows
+Automated testing and building on push to main branch
+Automated deployment to staging environment on successful build
+
+
+📬 Contact
+
+
+Project Link: https://github.com/samims/blog-services
