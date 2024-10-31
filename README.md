@@ -43,7 +43,7 @@ The system consists of two main microservices:
 1. Clone the repository:
 
     ```shell
-    git clone https://github.com/yourusername/blog-backend.git cd blog-backend
+    git clone https://github.com/samims/blog-services.git cd blog-services
     ```
 
 2. Start all services 
