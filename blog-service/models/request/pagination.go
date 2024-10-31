@@ -14,11 +14,11 @@ type PaginationReq struct {
 
 // PaginationResponse represents common response metadata
 type PaginationResponse struct {
-	CurrentPage int  `json:"current_page"`
-	PageSize    int  `json:"page_size"`
-	TotalItems  int  `json:"total_items"`
-	TotalPages  int  `json:"total_pages"`
-	HasNext     bool `json:"has_next"`
+	CurrentPage int   `json:"current_page"`
+	PageSize    int   `json:"page_size"`
+	TotalItems  int64 `json:"total_items"`
+	TotalPages  int   `json:"total_pages"`
+	HasNext     bool  `json:"has_next"`
 }
 
 func NewPaginationReq() *PaginationReq {

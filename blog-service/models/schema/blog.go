@@ -1,8 +1,9 @@
 package schema
 
 import (
-	"blog-service/models/resp"
 	"time"
+
+	"blog-service/models/resp"
 )
 
 // Blog Post represents a blog post schema

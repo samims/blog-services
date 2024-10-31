@@ -1,9 +1,10 @@
 package router
 
 import (
-	"blog-service/controllers"
 	"fmt"
 	"net/http"
+
+	"blog-service/controllers"
 )
 
 const (

@@ -4,7 +4,7 @@ import (
 	"math"
 )
 
-// BlogPublicResp  is a response from the blog publicatons endpoint
+// BlogPublicResp  is a response from the blog publications endpoint
 type BlogPublicResp struct {
 	ID      uint   `json:"id"`
 	Title   string `json:"title"`
@@ -29,6 +29,20 @@ type BlogListResp struct {
 type BlogListPaginatedResp struct {
 	Items []BlogPublicResp `json:"items"`
 	PaginationResp
+}
+
+type BaseResponse struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   string      `json:"error,omitempty"`
+}
+
+func NewBaseResponse() *BaseResponse {
+	return &BaseResponse{
+		Success: true,
+		Data:    nil,
+		Error:   "",
+	}
 }
 
 func NewPaginationResp(currentPage, pageSize int, totalItemsCount int64) PaginationResp {

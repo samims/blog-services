@@ -1,13 +1,13 @@
 package repositories
 
 import (
-	"blog-service/models/schema"
-	"errors"
-	"time"
-
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"time"
+
+	"blog-service/models/schema"
 
 	"github.com/sirupsen/logrus"
 )
@@ -18,6 +18,8 @@ var (
 	ErrInvalidBlog = errors.New("invalid blog data")
 
 	ErrDBOperation = errors.New("database operation failed")
+
+	ErrBlogCreateFailed = errors.New("blog create failed")
 )
 
 // BlogRepository  is a repository for blog
@@ -36,11 +38,6 @@ type blogRepository struct {
 	log *logrus.Logger
 }
 
-func (r *blogRepository) GetByAuthor(ctx context.Context, authorID uint, limit, offset int) (*[]schema.Blog, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 // NewBlogRepository returns a new instance of BlogRepository
 func NewBlogRepository(db *sql.DB, log *logrus.Logger) BlogRepository {
 	return &blogRepository{
@@ -56,16 +53,29 @@ func (r *blogRepository) Create(ctx context.Context, blog *schema.Blog) error {
 		return ErrInvalidBlog
 	}
 
-	//query := `
-	//INSERT INTO blogs (title, content, author_id, created_at, updated_at)
-	//VALUES ($1, $2, $3, $4, $5)
-	//RETURNING id`
+	query := `
+			INSERT INTO blogs (title, content, author_id, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5)
+			RETURNING id;
+	`
 
 	// set the timestamps
 	now := time.Now().UTC()
 	blog.CreatedAt = now
 	blog.UpdatedAt = now
 
+	// Execute query
+	err := r.db.QueryRowContext(ctx, query,
+		blog.Title,
+		blog.Content,
+		blog.Author,
+		blog.CreatedAt,
+		blog.UpdatedAt).Scan(&blog.ID)
+
+	if err != nil {
+		r.log.WithError(err).Error(ErrBlogCreateFailed)
+		return ErrBlogCreateFailed
+	}
 	return nil
 
 }
@@ -162,4 +172,9 @@ func (r *blogRepository) List(ctx context.Context, blog *[]schema.Blog, limit in
 	}
 	return &blogs, nil
 
+}
+
+func (r *blogRepository) GetByAuthor(ctx context.Context, authorID uint, limit, offset int) (*[]schema.Blog, error) {
+	// TODO implement me
+	panic("implement me")
 }
