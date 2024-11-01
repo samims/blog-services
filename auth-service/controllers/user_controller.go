@@ -1,11 +1,11 @@
 package controllers
 
 import (
-	"auth-service/models"
-	"auth-service/services"
-
 	"encoding/json"
 	"net/http"
+
+	"auth-service/models"
+	"auth-service/services"
 
 	"github.com/sirupsen/logrus"
 )
@@ -33,6 +33,7 @@ func NewUserController(svc services.UserService) AuthController {
 // Register  handles user registration
 func (c *authController) Register(w http.ResponseWriter, r *http.Request) {
 	var req models.User
+	ctx := r.Context()
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -40,31 +41,34 @@ func (c *authController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.service.Register(&req)
+	err = c.service.Register(ctx, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.log.Errorf("error registering user: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
+	w.WriteHeader(http.StatusCreated)
 }
-
-// Login controller handles  user login and  returns a JWT token
 func (c *authController) Login(w http.ResponseWriter, r *http.Request) {
 	var req models.LoginRequest
+	ctx := r.Context()
+
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	resp, err := c.service.Login(req)
+	resp, err := c.service.Login(ctx, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(resp)
-
 }
 
 // Verify handles  JWT token verification

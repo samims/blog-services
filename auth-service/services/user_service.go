@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -14,9 +15,9 @@ import (
 
 // UserService is an  interface for user service
 type UserService interface {
-	Register(user *models.User) error
-	Login(loginReq models.LoginRequest) (models.LoginResponse, error)
-	Verify(verify models.VerifyRequest) error
+	Register(ctx context.Context, user *models.User) error
+	Login(ctx context.Context, loginReq models.LoginRequest) (models.LoginResponse, error)
+	Verify(ctx context.Context, verify models.VerifyRequest) error
 }
 
 // userService is an implementation of UserService
@@ -26,8 +27,8 @@ type userService struct {
 }
 
 // Register creates a new user after hashing the password
-func (u userService) Register(user *models.User) error {
-	// hash the password cause  we don't want to store plain text password
+func (u userService) Register(ctx context.Context, user *models.User) error {
+	// hash the password, because we don't want to store plain text password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -36,14 +37,14 @@ func (u userService) Register(user *models.User) error {
 	user.Password = string(hashedPassword)
 
 	// save the user
-	err = u.repo.Create(user)
+	err = u.repo.Create(ctx, user)
 	return err
 }
 
 // Login service handles business logic  for login
-func (u userService) Login(loginReq models.LoginRequest) (models.LoginResponse, error) {
+func (u userService) Login(ctx context.Context, loginReq models.LoginRequest) (models.LoginResponse, error) {
 
-	user, err := u.repo.GetByUserEmail(loginReq.Email)
+	user, err := u.repo.GetByUserEmail(ctx, loginReq.Email)
 	if err != nil {
 		return models.LoginResponse{}, errors.New("username or password error")
 	}
@@ -74,7 +75,7 @@ func (u userService) Login(loginReq models.LoginRequest) (models.LoginResponse, 
 }
 
 // Verify service  handles business logic for verify it can  be used to verify jwt  token
-func (u userService) Verify(_ models.VerifyRequest) error {
+func (u userService) Verify(_ context.Context, req models.VerifyRequest) error {
 	// verify the token
 	panic("implement me")
 }
