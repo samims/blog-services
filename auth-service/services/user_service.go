@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"auth-service/config"
+	"auth-service/constants"
 	"auth-service/models"
 	"auth-service/repositories"
 	"auth-service/utils"
@@ -46,11 +47,11 @@ func (u userService) Login(ctx context.Context, loginReq models.LoginRequest) (m
 
 	user, err := u.repo.GetByUserEmail(ctx, loginReq.Email)
 	if err != nil {
-		return models.LoginResponse{}, errors.New("username or password error")
+		return models.LoginResponse{}, errors.New(constants.ErrInvalidEmailOrPass)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(loginReq.Password), []byte(user.Password)); err != nil {
-		return models.LoginResponse{}, errors.New("username or password error")
+		return models.LoginResponse{}, errors.New(constants.ErrInvalidEmailOrPass)
 	}
 
 	// generate token
