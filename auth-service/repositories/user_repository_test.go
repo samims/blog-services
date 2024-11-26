@@ -127,7 +127,7 @@ func Test_userRepository_Create(t *testing.T) {
 				db: tt.fields.db,
 			}
 			if err := r.Create(context.Background(), tt.args.user); (err != nil) != tt.wantErr {
-				t.Errorf("Create() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("User repo create error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -162,9 +162,19 @@ func Test_userRepository_GetByUserEmail(t *testing.T) {
 			},
 			wantErr: false,
 			mockFn: func(sqlMockObj sqlmock.Sqlmock) {
-				userRows := sqlmock.NewRows([]string{"id"}).
-					AddRow(1)
-				sqlStr := `^SELECT id, email, first_name, last_name FROM users WHERE email = \$1$`
+				userRows := sqlmock.NewRows(
+					[]string{
+						"id",
+						"email",
+						"password",
+						"first_name",
+						"last_name",
+					},
+				).AddRow(
+					1, "", "", "", "",
+				)
+
+				sqlStr := `^SELECT id, email, password, first_name, last_name FROM users WHERE email = \$1$`
 				sqlMockObj.ExpectQuery(sqlStr).
 					WithArgs("test@example.com").
 					WillReturnRows(userRows)
@@ -181,7 +191,7 @@ func Test_userRepository_GetByUserEmail(t *testing.T) {
 			mockFn: func(sqlMockObj sqlmock.Sqlmock) {
 				// Use the exact query string instead of regex
 				// sqlMockObj.ExpectQuery("SELECT id, email, first_name, last_name FROM users WHERE email = \\$1").
-				sqlStr := `^SELECT id, email, first_name, last_name FROM users WHERE email = \$1$`
+				sqlStr := `^SELECT id, email, password, first_name, last_name FROM users WHERE email = \$1$`
 
 				sqlMockObj.ExpectQuery(sqlStr).
 					WithArgs("notfound@example.com").

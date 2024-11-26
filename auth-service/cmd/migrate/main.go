@@ -15,7 +15,11 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
+// main initializes and runs database migrations, prints the tables in the database and their columns,
+// and handles errors.
 func main() {
+
+	// Define a string flag for the migration directory and parse the terminal input.
 	var migrationDir string
 	flag.StringVar(&migrationDir, "migration-dir", "migrations", "Directory with migration files")
 	flag.Parse()
@@ -25,6 +29,7 @@ func main() {
 		log.Fatal("DATABASE_URL generation failed")
 	}
 
+	// Initialize a new database migration.
 	m, err := migrate.New(
 		fmt.Sprintf("file://%s", migrationDir),
 		dbURL,
@@ -33,11 +38,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Run the database migration.
 	if migrationErr := m.Up(); migrationErr != nil && !errors.Is(migrationErr, migrate.ErrNoChange) {
 		log.Fatal(err)
 	}
 
 	log.Println("Migrations completed successfully")
+
+	// Open a connection to the database.
 	sqlDB, err := sql.Open("postgres", dbURL)
 
 	// Print tables after migration
@@ -46,6 +54,8 @@ func main() {
 	}
 }
 
+// getConnectionURL constructs a PostGreSQL connection URL using environment variables
+// for host, port, user, password, database name, and SSL mode.
 func getConnectionURL() string {
 	dbHost := os.Getenv(constants.PostgresHost)
 	dbPort := os.Getenv(constants.PostgresPort)
@@ -67,6 +77,8 @@ func getConnectionURL() string {
 
 }
 
+// printTables retrieves and logs all table names in the given database along with their columns and types.
+// It takes a *sql.DB connection as a parameter and returns an error if the operation fails.
 func printTables(db *sql.DB) error {
 	defer func(db *sql.DB) {
 		err := db.Close()
@@ -104,6 +116,9 @@ func printTables(db *sql.DB) error {
 	return rows.Err()
 }
 
+// printColumns retrieves and prints the columns with their data types for a given table in the database.
+// Takes a database connection (db) and a table name (tableName) as parameters.
+// Returns an error if there's an issue querying or scanning the column information from the database.
 func printColumns(db *sql.DB, tableName string) error {
 	rows, err := db.Query(
 		"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = $1", tableName)

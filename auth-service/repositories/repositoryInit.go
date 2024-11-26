@@ -1,6 +1,9 @@
 package repositories
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 // Repository is an interface for all repositories
 type Repository interface {
@@ -18,8 +21,11 @@ func (r *repo) UserRepository() UserRepository {
 }
 
 // NewRepository returns a new instance of Repository.
-func NewRepository(db *sql.DB) Repository {
+func NewRepository(db *sql.DB) (Repository, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db connection cannot be nil")
+	}
 	return &repo{
 		userRepository: NewUserRepository(db),
-	}
+	}, nil
 }
