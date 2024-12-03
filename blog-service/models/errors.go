@@ -19,6 +19,7 @@ var (
 )
 
 // Validation errors that can occur during request validation
+
 var (
 	ErrInvalidRequest = errors.New("validation: invalid request")
 )

@@ -135,7 +135,7 @@ func Test_userService_Login(t *testing.T) {
 				repo: tt.fields.repo,
 				conf: tt.fields.conf,
 			}
-			got, err := u.Login(tt.args.ctx, tt.args.loginReq)
+			_, got, err := u.Login(tt.args.ctx, tt.args.loginReq)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Login() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -168,7 +168,7 @@ func Test_userService_Register(t *testing.T) {
 				repo: tt.fields.repo,
 				conf: tt.fields.conf,
 			}
-			if err := u.Register(tt.args.ctx, tt.args.user); (err != nil) != tt.wantErr {
+			if _, err := u.Register(tt.args.ctx, tt.args.user); (err != nil) != tt.wantErr {
 				t.Errorf("Register() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -196,7 +196,7 @@ func Test_userService_Verify(t *testing.T) {
 				repo: tt.fields.repo,
 				conf: tt.fields.conf,
 			}
-			if err := u.Verify(tt.args.in0, tt.args.req); (err != nil) != tt.wantErr {
+			if _, err := u.VerifyToken(tt.args.in0, tt.args.req.Token); (err != nil) != tt.wantErr {
 				t.Errorf("Verify() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
