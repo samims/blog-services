@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"blog-service/models/resp"
 	"encoding/json"
 	"net/http"
 
@@ -25,9 +26,12 @@ type authController struct {
 	log     *logrus.Logger
 }
 
-// NewUserController returns a new instance of UserController
-func NewUserController(svc services.UserService) AuthController {
-	return &authController{service: svc}
+// NewAuthController returns a new instance of authController
+func NewAuthController(svc services.UserService, l *logrus.Logger) AuthController {
+	return &authController{
+		service: svc,
+		log:     l,
+	}
 }
 
 // Register  handles user registration
@@ -35,21 +39,24 @@ func (c *authController) Register(w http.ResponseWriter, r *http.Request) {
 	var req models.User
 	ctx := r.Context()
 
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		c.log.Warn("Failed to decode request body: ", err)
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	err = c.service.Register(ctx, &req)
+	statusCode, err := c.service.Register(ctx, &req)
 	if err != nil {
-		c.log.Errorf("error registering user: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		c.log.Errorf("Error registering user: %v", err)
+		http.Error(w, "User  registration failed", statusCode)
+
 		return
 	}
+	c.log.Info("User registered successfully")
 
 	w.WriteHeader(http.StatusCreated)
 }
+
 func (c *authController) Login(w http.ResponseWriter, r *http.Request) {
 	var req models.LoginRequest
 	ctx := r.Context()
@@ -60,15 +67,18 @@ func (c *authController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := c.service.Login(ctx, req)
+	status, data, err := c.service.Login(ctx, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		c.log.WithFields(logrus.Fields{
+			"email": req.Email,
+			"error": err,
+		})
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(data)
 }
 
 // Verify handles  JWT token verification
