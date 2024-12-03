@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"log"
 	"net/http"
 	"os"
@@ -26,15 +27,16 @@ func main() {
 	dbConn := mustConnectDB()
 	defer mustCloseDB(dbConn)
 
+	l := logrus.New()
 	env := loadEnv()
 	conf := config.NewConfiguration(config.NewAppConfig(env))
 
 	repo := mustInitRepo(dbConn)
 	svc := services.NewServices(repo, conf)
-	ctrl := controllers.NewController(svc)
+	ctrl := controllers.NewController(svc, l)
 
 	r := router.InitUserRouter(ctrl)
-	srv := createServer(fmt.Sprintf(":%s", os.Getenv(constants.AppPort)), r)
+	srv := createServer(fmt.Sprintf("0.0.0.0:%s", os.Getenv(constants.AppPort)), r)
 
 	go startServer(srv)
 	shutdownServerGracefully(srv)
@@ -82,7 +84,7 @@ func createServer(addr string, handler http.Handler) *http.Server {
 
 // startServer starts the HTTP server and logs fatal errors.
 func startServer(srv *http.Server) {
-	log.Println("starting server on", srv.Addr)
+	log.Println("starting server on..", srv.Addr)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("failed to start the server: %v", err)
 	}

@@ -30,10 +30,7 @@ func main() {
 	}
 
 	// Initialize a new database migration.
-	m, err := migrate.New(
-		fmt.Sprintf("file://%s", migrationDir),
-		dbURL,
-	)
+	m, err := migrate.New(fmt.Sprintf("file://%s", migrationDir), dbURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,7 +44,6 @@ func main() {
 
 	// Open a connection to the database.
 	sqlDB, err := sql.Open("postgres", dbURL)
-
 	// Print tables after migration
 	if err := printTables(sqlDB); err != nil {
 		log.Printf("Error printing tables: %v", err)
@@ -80,24 +76,14 @@ func getConnectionURL() string {
 // printTables retrieves and logs all table names in the given database along with their columns and types.
 // It takes a *sql.DB connection as a parameter and returns an error if the operation fails.
 func printTables(db *sql.DB) error {
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			log.Printf("error closing database connection: %v", err)
-		}
-	}(db)
+	defer db.Close()
 
 	rows, err := db.Query(
 		"SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name = 'BASE TABLE'")
 	if err != nil {
 		return fmt.Errorf("error querying tables: %w", err)
 	}
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			log.Printf("error closing rows: %v", err)
-		}
-	}(rows)
+	defer rows.Close()
 
 	log.Println("Tables in the database:")
 	for rows.Next() {
@@ -105,7 +91,8 @@ func printTables(db *sql.DB) error {
 		if err := rows.Scan(&tableName); err != nil {
 			return fmt.Errorf("error scanning table name: %w", err)
 		}
-		log.Printf("- %s", tableName)
+		//log.Printf("- %s", tableName)
+		log.Printf("- Table: %s", tableName)
 
 		// Print columns for each table
 		if err := printColumns(db, tableName); err != nil {
@@ -125,12 +112,7 @@ func printColumns(db *sql.DB, tableName string) error {
 	if err != nil {
 		return fmt.Errorf("error querying columns: %w", err)
 	}
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			log.Printf("Error closing rows: %v", err)
-		}
-	}(rows)
+	defer rows.Close()
 
 	log.Printf("  Columns:")
 	for rows.Next() {

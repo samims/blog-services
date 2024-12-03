@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"blog-service/models/resp"
 	"encoding/json"
 	"net/http"
 
@@ -41,20 +40,18 @@ func (c *authController) Register(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		c.log.Warn("Failed to decode request body: ", err)
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 
 	statusCode, err := c.service.Register(ctx, &req)
 	if err != nil {
 		c.log.Errorf("Error registering user: %v", err)
-		http.Error(w, "User  registration failed", statusCode)
-
+		RespondWithJSON(w, statusCode, nil, err.Error())
 		return
 	}
 	c.log.Info("User registered successfully")
-
-	w.WriteHeader(http.StatusCreated)
+	RespondWithJSON(w, http.StatusCreated, nil, "")
 }
 
 func (c *authController) Login(w http.ResponseWriter, r *http.Request) {
@@ -63,27 +60,37 @@ func (c *authController) Login(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	status, data, err := c.service.Login(ctx, req)
 	if err != nil {
-		c.log.WithFields(logrus.Fields{
-			"email": req.Email,
-			"error": err,
-		})
+		logrus.Warnf("Error logging in user: %v", err)
+		RespondWithError(w, status, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(data)
+	RespondWithJSON(w, status, data, "")
 }
 
 // Verify handles  JWT token verification
 func (c *authController) Verify(w http.ResponseWriter, r *http.Request) {
-	panic("implement")
+	tokenString := r.Header.Get("Authorization")
+	if tokenString == "" {
+		RespondWithError(w, http.StatusUnauthorized, "Missing Authorization header")
+		return
+	}
+
+	// call the service to verify the token
+	verified, err := c.service.VerifyToken(r.Context(), tokenString)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, verified, "")
+
 }
 
 // Logout  handles user logout

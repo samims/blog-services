@@ -1,6 +1,9 @@
 package controllers
 
-import "auth-service/services"
+import (
+	"auth-service/services"
+	"github.com/sirupsen/logrus"
+)
 
 type Controller interface {
 	AuthController() AuthController
@@ -16,9 +19,9 @@ func (c *controller) AuthController() AuthController {
 }
 
 // NewController  returns a new instance of controller
-func NewController(svc services.Services) Controller {
+func NewController(svc services.Services, l *logrus.Logger) Controller {
 	uSvc := svc.UserService()
 	return &controller{
-		authCtrl: NewUserController(uSvc),
+		authCtrl: NewAuthController(uSvc, l),
 	}
 }

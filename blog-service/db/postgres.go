@@ -1,6 +1,7 @@
 package db
 
 import (
+	"blog-service/logger"
 	"context"
 	"database/sql"
 	"fmt"
@@ -8,7 +9,6 @@ import (
 	"blog-service/config"
 
 	_ "github.com/lib/pq"
-	"github.com/sirupsen/logrus"
 )
 
 // PostgresConnector interface defines methods that any database connector must implement
@@ -24,11 +24,11 @@ type PostgresConnector interface {
 type postgresConnector struct {
 	pgConf config.PostgresConfig
 	db     *sql.DB
-	log    *logrus.Logger
+	log    *logger.AppLogger
 }
 
 // NewPostgresConnector creates a new instance of postgresConnector
-func NewPostgresConnector(cfg config.PostgresConfig, log *logrus.Logger) PostgresConnector {
+func NewPostgresConnector(cfg config.PostgresConfig, log *logger.AppLogger) PostgresConnector {
 	return &postgresConnector{
 		pgConf: cfg,
 		log:    log,
@@ -40,14 +40,15 @@ func (pc *postgresConnector) Connect(ctx context.Context) (*sql.DB, error) {
 	// Create connection string and establish a new connection
 	connStr := pc.pgConf.ConnectionURL()
 
-	pc.log.Infof("Connecting to postgres at %s", connStr)
+	pc.log.Debugf("Connecting to postgres at %s", connStr)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database %w", err)
 	}
-	pc.log.Infof("Successfully opened db instance postgres at %s", connStr)
+	pc.log.Debugf("Successfully opened db instance postgres at %s", connStr)
 
 	if err = db.PingContext(ctx); err != nil {
+		pc.log.Warnf("failed to ping database connection with connectionString %s", connStr)
 		closeErr := db.Close()
 		if closeErr != nil {
 			pc.log.WithContext(ctx).Error("failed to close database connection")
@@ -65,10 +66,10 @@ func (pc *postgresConnector) Disconnect() error {
 	if pc.GetDB() != nil {
 		closeErr := pc.GetDB().Close()
 		if closeErr != nil {
-			pc.log.Warn("failed to close database connection")
+			pc.log.Warn(context.Background(), "failed to close database connection")
 			return closeErr
 		}
-		pc.log.Info("successfully closed database connection")
+		pc.log.Info(context.Background(), "successfully closed database connection")
 	}
 	return nil
 }

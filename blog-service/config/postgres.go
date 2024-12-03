@@ -1,9 +1,8 @@
 package config
 
 import (
-	"fmt"
-
 	"blog-service/constants"
+	"fmt"
 
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
@@ -62,7 +61,6 @@ func (cfg *postgresConfig) SSLMode() string {
 
 func (cfg *postgresConfig) ConnectionURL() string {
 	cfg.env.AutomaticEnv()
-
 	pgInfo := fmt.Sprintf(
 		"host=%s port=%s user=%s "+
 			"password=%s dbname=%s sslmode=disable",

@@ -1,61 +1,64 @@
 package schema
 
 import (
-	"time"
-
 	"blog-service/models/resp"
+
+	"time"
 )
 
-// Blog Post represents a blog post schema
+// Blog represents a blog post schema
 type Blog struct {
 	ID        uint      `json:"id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	Author    uint      `json:"author"`
+	Title     string    `json:"title,omitempty"`
+	Content   string    `json:"content,omitempty"`
+	AuthorID  uint      `json:"author"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type BlogList []*Blog
+// BlogList represents a list of blog posts schema
+type BlogList []Blog
 
-// ToResponse converts a Blog entity to a BlogResponse.
-// Used for preparing API responses.
+// ToResponse converts a Blog entity to a BlogDetailResp.
+// Used for preparing detailed API responses.
 func (b *Blog) ToResponse() *resp.BlogDetailResp {
 	return &resp.BlogDetailResp{
-		ID:       b.ID,
-		Title:    b.Title,
-		Content:  b.Content,
-		Author:   b.Author,
-		CreateAt: b.CreatedAt.Format(time.RFC3339),
-		UpdateAt: b.UpdatedAt.Format(time.RFC3339),
+		ID:        b.ID,
+		Title:     b.Title,
+		Content:   b.Content,
+		Author:    b.AuthorID,
+		CreatedAt: b.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: b.UpdatedAt.Format(time.RFC3339),
 	}
 }
 
-func (b *Blog) ToResponsePublic() *resp.BlogPublicResp {
-	return &resp.BlogPublicResp{
+// ToResponsePublic converts a Blog entity to a BlogPublicResp.
+// Used for preparing public API responses.
+func (b *Blog) ToResponsePublic() resp.BlogPublicResp {
+	return resp.BlogPublicResp{
 		ID:      b.ID,
 		Title:   b.Title,
 		Content: b.Content,
-		Author:  b.Author,
+		Author:  b.AuthorID,
 	}
 }
 
-// ToResponseList converts  a BlogList entity to a BlogResponseList.
-// Used for preparing API responses.
+// ToResponseList converts a BlogList to a slice of BlogPublicResp.
+// Used for preparing a list of public API responses.
 func (bl BlogList) ToResponseList() []resp.BlogPublicResp {
-	blogRespList := make([]resp.BlogPublicResp, 0, len(bl))
+	blogRespList := make([]resp.BlogPublicResp, len(bl)) // Preallocate slice
 
-	for _, blog := range bl {
-		blogRespList = append(blogRespList, *blog.ToResponsePublic())
+	for i, blog := range bl {
+		blogRespList[i] = blog.ToResponsePublic()
 	}
 	return blogRespList
 }
 
-// ToPaginatedListResp converts blog list to a complete BlogListResponse with pagination
-func (bl BlogList) ToPaginatedListResp(page, perPage int, total int64) *resp.BlogListPaginatedResp {
-	paginatedRespList := &resp.BlogListPaginatedResp{
-		Items:          bl.ToResponseList(),
-		PaginationResp: resp.NewPaginationResp(page, perPage, total),
+// ToPaginatedListResp converts a BlogList to a complete BlogListPaginatedResp with pagination.
+// This method prepares a paginated response for API requests.
+func (bl BlogList) ToPaginatedListResp(apiVersion string, page, perPage int, total int64) *resp.BlogListPaginatedResp {
+	return &resp.BlogListPaginatedResp{
+		Items:      bl.ToResponseList(),
+		Pagination: resp.NewPaginationResp(apiVersion, page, perPage, total),
 	}
-	return paginatedRespList
 }

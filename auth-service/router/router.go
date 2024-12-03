@@ -16,8 +16,8 @@ func InitUserRouter(ctrl controllers.Controller) *http.ServeMux {
 
 	router := http.ServeMux{}
 
-	router.HandleFunc(loginPath, userCtrl.Login)
 	router.HandleFunc(registerPath, userCtrl.Register)
+	router.HandleFunc(loginPath, userCtrl.Login)
 
 	return &router
 

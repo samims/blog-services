@@ -5,36 +5,33 @@ import (
 	"blog-service/models"
 )
 
-type PaginationReq struct {
+// PaginationRequest represents the request parameters for pagination.
+type PaginationRequest struct {
 	Page      int    `json:"page"`
 	PageSize  int    `json:"page_size"`
 	SortBy    string `json:"sort_by"`
 	SortOrder string `json:"sort_order"`
 }
 
-// PaginationResponse represents common response metadata
-type PaginationResponse struct {
-	CurrentPage int   `json:"current_page"`
-	PageSize    int   `json:"page_size"`
-	TotalItems  int64 `json:"total_items"`
-	TotalPages  int   `json:"total_pages"`
-	HasNext     bool  `json:"has_next"`
-}
-
-func NewPaginationReq() *PaginationReq {
-	return &PaginationReq{
-		Page:      constants.DefaultPage,
-		PageSize:  constants.DefaultPageSize,
-		SortBy:    constants.DefaultSortBy,
-		SortOrder: constants.DefaultSortOrder,
+// NewPaginationRequest creates a new PaginationRequest with the specified values.
+func NewPaginationRequest(page, pageSize int, sortBy, sortOrder string) *PaginationRequest {
+	req := &PaginationRequest{
+		Page:      page,
+		PageSize:  pageSize,
+		SortBy:    sortBy,
+		SortOrder: sortOrder,
 	}
+	req.SetDefaults() // Set defaults if necessary
+	return req
 }
 
-func (p *PaginationReq) GetOffset() int {
+// GetOffset calculates the offset for pagination based on the current page and page size.
+func (p *PaginationRequest) GetOffset() int {
 	return (p.Page - 1) * p.PageSize
 }
 
-func (p *PaginationReq) SetDefaults() {
+// SetDefaults sets default values for pagination parameters if they are not provided.
+func (p *PaginationRequest) SetDefaults() {
 	if p.PageSize < 1 || p.PageSize > constants.MaxPageSize {
 		p.PageSize = constants.DefaultPageSize
 	}
@@ -46,15 +43,15 @@ func (p *PaginationReq) SetDefaults() {
 	}
 }
 
-func (r *BlogListReq) ValidateBase() error {
-	if r.Page < 1 {
+// Validate validates the pagination request parameters.
+func (p *PaginationRequest) Validate() error {
+	if p.Page < 1 {
 		return models.ErrInvalidPage
 	}
-	if r.PageSize < 1 || r.PageSize > constants.MaxPageSize {
+	if p.PageSize < 1 || p.PageSize > constants.MaxPageSize {
 		return models.ErrInvalidPageSize
 	}
-
-	if r.SortOrder != constants.SortOrderAsc && r.SortOrder != constants.SortOrderDesc {
+	if p.SortOrder != constants.SortOrderAsc && p.SortOrder != constants.SortOrderDesc {
 		return models.ErrInvalidSortOrder
 	}
 	return nil

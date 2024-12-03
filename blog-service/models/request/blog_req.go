@@ -4,29 +4,34 @@ import "blog-service/constants"
 
 // BlogListReq  is the request body for blog list
 type BlogListReq struct {
-	*PaginationReq
+	*PaginationRequest
 	AuthorId *uint   `json:"author_id,omitempty"`
 	Category *string `json:"category,omitempty"`
 	Title    *string `json:"title,omitempty"`
 }
 
 // NewBlogListReq  returns a new instance of BlogListReq
-func NewBlogListReq() *BlogListReq {
+func NewBlogListReq(page, pageSize int, sortBy, sortOrder string) *BlogListReq {
 	return &BlogListReq{
-		PaginationReq: NewPaginationReq(),
+		PaginationRequest: NewPaginationRequest(
+			page,
+			pageSize,
+			sortBy,
+			sortOrder,
+		),
 	}
 }
 
 // SetDefaults   sets default values for the request
 func (r *BlogListReq) SetDefaults() {
-	r.PaginationReq.SetDefaults()
+	r.PaginationRequest.SetDefaults()
 	// add any blog specific default values here
 }
 
 // Validate validates the request
 func (r *BlogListReq) Validate() error {
 	//  validate pagination
-	if err := r.ValidateBase(); err != nil {
+	if err := r.Validate(); err != nil {
 		return err
 	}
 	//   validate blog specific fields

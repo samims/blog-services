@@ -1,180 +1,207 @@
 package repositories
 
 import (
+	"blog-service/logger"
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
+	"blog-service/models"
 	"blog-service/models/schema"
 
-	"github.com/sirupsen/logrus"
+	"blog-service/models/request"
 )
 
-var (
-	ErrBlogNotFound = errors.New("blog not found")
-
-	ErrInvalidBlog = errors.New("invalid blog data")
-
-	ErrDBOperation = errors.New("database operation failed")
-
-	ErrBlogCreateFailed = errors.New("blog create failed")
-)
-
-// BlogRepository  is a repository for blog
+// BlogRepository defines the methods for interacting with the blog data.
 type BlogRepository interface {
-	Create(ctx context.Context, blog *schema.Blog) error
-	Update(ctx context.Context, blog *schema.Blog) error
-	Delete(ctx context.Context, blog *schema.Blog) error
-	GetByID(ctx context.Context, blogId int64) (*schema.Blog, error)
-	List(ctx context.Context, blog *[]schema.Blog, limit int, offset int) (*[]schema.Blog, error)
-	GetByAuthor(ctx context.Context, authorID uint, limit, offset int) (*[]schema.Blog, error)
+	CreateBlog(ctx context.Context, blog *schema.Blog) error
+	GetAllBlogs(ctx context.Context, pageReq request.PaginationRequest) ([]schema.Blog, int64, error)
+	GetBlogsByAuthorID(ctx context.Context, authorId int64, pageReq request.PaginationRequest) ([]schema.Blog, int64, error)
+
+	GetBlogCount(ctx context.Context) (int64, error)
+
+	GetBlogByID(ctx context.Context, blogId int64) (*schema.Blog, error)
+	UpdateBlog(ctx context.Context, blog *schema.Blog) error
+	DeleteBlog(ctx context.Context, blogId int64) error
 }
 
-// blogRepository is a concrete implementation of BlogRepository
+// blogRepository is a concrete implementation of BlogRepository.
 type blogRepository struct {
 	db  *sql.DB
-	log *logrus.Logger
+	log *logger.AppLogger
 }
 
-// NewBlogRepository returns a new instance of BlogRepository
-func NewBlogRepository(db *sql.DB, log *logrus.Logger) BlogRepository {
+// NewBlogRepository creates a new instance of BlogRepository.
+func NewBlogRepository(db *sql.DB, log *logger.AppLogger) BlogRepository {
 	return &blogRepository{
 		db:  db,
 		log: log,
 	}
 }
 
-// Create inserts  a new blog into the database
-func (r *blogRepository) Create(ctx context.Context, blog *schema.Blog) error {
-	// Create a new transaction
-	if blog == nil {
-		return ErrInvalidBlog
-	}
+// CreateBlog adds a new blog to the repository.
+func (repo *blogRepository) CreateBlog(ctx context.Context, blog *schema.Blog) error {
+	repo.log.Infof("Creating new blog: %+v", blog)
+	query := `INSERT INTO blogs (title, content, author_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`
 
-	query := `
-			INSERT INTO blogs (title, content, author_id, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5)
-			RETURNING id;
-	`
-
-	// set the timestamps
-	now := time.Now().UTC()
-	blog.CreatedAt = now
-	blog.UpdatedAt = now
-
-	// Execute query
-	err := r.db.QueryRowContext(ctx, query,
-		blog.Title,
-		blog.Content,
-		blog.Author,
-		blog.CreatedAt,
-		blog.UpdatedAt).Scan(&blog.ID)
-
+	_, err := repo.db.ExecContext(ctx, query, blog.Title, blog.Content, blog.AuthorID, time.Now(), time.Now())
 	if err != nil {
-		r.log.WithError(err).Error(ErrBlogCreateFailed)
-		return ErrBlogCreateFailed
+		repo.log.Errorf("Failed to create blog: %v", err)
+		return fmt.Errorf("creating blog: %w", err)
 	}
 	return nil
-
 }
 
-// Update ...
-func (r *blogRepository) Update(ctx context.Context, blog *schema.Blog) error {
-	_, err := r.db.Exec(
-		"UPDATE blogs SET title = ?, content = ?, updated_at = ? WHERE id = ?",
-		blog.Title,
-		blog.Content,
-		blog.UpdatedAt,
-		blog.ID,
-	)
-	if err != nil {
-		r.log.Errorf("Error updating blog: %v", err)
-		return err
+// GetAllBlogs retrieves all blogs with pagination.
+func (repo *blogRepository) GetAllBlogs(ctx context.Context, pageReq request.PaginationRequest) ([]schema.Blog, int64, error) {
+	var blogs = make([]schema.Blog, 0)
+	var totalRecords int64 = 0
+	var err error
+	repo.log.Info(ctx, "Getting all blogs")
+
+	// Counting total records
+	countQuery := `SELECT COUNT(*) FROM blogs`
+	if err := repo.db.QueryRowContext(ctx, countQuery).Scan(&totalRecords); err != nil {
+		repo.log.Errorf("Failed to count total blogs: %v", err)
+		return blogs, totalRecords, fmt.Errorf("counting blogs: %w", err)
 	}
-	return nil
+	repo.log.Debugf("Total blogs count: %d", totalRecords)
 
-}
-
-// Delete fetches  a blog by ID and deletes it
-func (r *blogRepository) Delete(ctx context.Context, blog *schema.Blog) error {
-	query := "DELETE FROM blogs WHERE id = $1"
-
-	// execute  the query
-	result, err := r.db.Exec(query, blog.ID)
+	// Fetching paginated blogs
+	query := `SELECT id, title, content, author_id, created_at, updated_at FROM blogs LIMIT $1 OFFSET $2`
+	rows, err := repo.db.QueryContext(ctx, query, pageReq.PageSize, pageReq.GetOffset())
 	if err != nil {
-		return fmt.Errorf("failed to delete blog %w", err)
+		repo.log.Errorf("Failed to fetch blogs: %v", err)
+		return blogs, totalRecords, fmt.Errorf("fetching blogs: %w", err)
 	}
 
-	// check the number of rows affected
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected %w", err)
-	}
-	//  if no rows were affected meaning  the blog was not found
-	if rowsAffected == 0 {
-		return fmt.Errorf("blog not found")
-	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			repo.log.Errorf("Failed to close rows: %v", err)
 
-	return nil
-
-}
-
-// GetByID fetches  a blog by its ID.
-func (r *blogRepository) GetByID(ctx context.Context, blogId int64) (*schema.Blog, error) {
-	var blog schema.Blog
-
-	// Prepare the query
-	query := "SELECT id, title, content, created_at, updated_at FROM blogs WHERE id = $1"
-
-	// Execute the query
-	err := r.db.QueryRow(query, blogId).Scan(&blog.ID, &blog.Title, &blog.Content, &blog.CreatedAt, &blog.UpdatedAt)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) { // Return a specific error if no rows are found
-			return nil, fmt.Errorf("no blog found with id %d", blogId)
 		}
-		// Return the error encountered
-		return nil, fmt.Errorf("failed to get blog: %w", err)
-	}
+	}(rows)
 
-	return &blog, nil
-}
-
-// List fetches  all blogs
-func (r *blogRepository) List(ctx context.Context, blog *[]schema.Blog, limit int, offset int) (*[]schema.Blog, error) {
-	var blogs []schema.Blog
-
-	queryStr := `SELECT id, title, content, author, created_at from blogs ORDER BY created_at  DESC LIMIT $1 OFFSET $2`
-	rows, err := r.db.Query(queryStr, limit, offset)
-
-	if err != nil {
-		r.log.Errorf("Error listing blogs: %v", err)
-		return nil, err
-	}
-
-	defer rows.Close()
-	// scan  rows and  append to blog slice
 	for rows.Next() {
 		var blog schema.Blog
-		err = rows.Scan(
-			&blog.ID,
-			&blog.Title,
-			&blog.Content,
-			&blog.Author,
-			&blog.CreatedAt,
-		)
-		if err != nil {
-			r.log.Errorf("Error scanning blog: %v", err)
-			return nil, err
+		if err := rows.Scan(&blog.ID, &blog.Title, &blog.Content, &blog.AuthorID, &blog.CreatedAt, &blog.UpdatedAt); err != nil {
+			repo.log.Errorf("Failed to scan blog: %v", err)
+			return []schema.Blog{}, 0, fmt.Errorf("scanning blog: %w", err)
 		}
 		blogs = append(blogs, blog)
 	}
-	return &blogs, nil
+
+	if err := rows.Err(); err != nil {
+		repo.log.Errorf("Row iteration error: %v", err)
+		return []schema.Blog{}, 0, fmt.Errorf("iterating rows: %w", err)
+	}
+
+	return blogs, totalRecords, nil
+}
+
+// GetBlogsByAuthorID retrieves blogs by a specific author.
+func (repo *blogRepository) GetBlogsByAuthorID(ctx context.Context, authorId int64, pageReq request.PaginationRequest) ([]schema.Blog, int64, error) {
+	repo.log.Infof("Fetching blogs by author ID: %d", authorId)
+
+	var blogs = make([]schema.Blog, 0)
+	var totalRecords int64 = 0
+	var err error
+
+	authorBlogCountQuery := `SELECT COUNT(*) FROM blogs WHERE author_id = ?`
+
+	if err := repo.db.QueryRowContext(ctx, authorBlogCountQuery, authorId).Scan(&totalRecords); err != nil {
+		repo.log.Errorf("Failed to count total blogs: %v", err)
+		return blogs, totalRecords, fmt.Errorf("counting blogs: %w", err)
+	}
+
+	repo.log.Debugf("Total blogs count: %d", totalRecords)
+
+	queryStr := `SELECT id, title, content, author_id, created_at, updated_at FROM blogs WHERE author_id = ? LIMIT ? OFFSET ?`
+	rows, err := repo.db.QueryContext(ctx, queryStr, authorId, pageReq.PageSize, pageReq.GetOffset())
+	if err != nil {
+		repo.log.Errorf("Failed to fetch blogs: %v", err)
+		return blogs, 0, fmt.Errorf("fetching blogs: %w", err)
+	}
+
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			repo.log.Errorf("Failed to close rows: %v", err)
+			return
+		}
+	}(rows)
+
+	for rows.Next() {
+		var blog schema.Blog
+		if err := rows.Scan(&blog.ID, &blog.Title, &blog.Content, &blog.AuthorID, &blog.CreatedAt, &blog.UpdatedAt); err != nil {
+			repo.log.Errorf("Failed to scan blog: %v", err)
+			return blogs, 0, fmt.Errorf("scanning blog: %w", err)
+		}
+		blogs = append(blogs, blog)
+	}
+	if err := rows.Err(); err != nil {
+		repo.log.Errorf("Row iteration error: %v", err)
+		return blogs, 0, fmt.Errorf("iterating rows: %w", err)
+	}
+
+	return blogs, totalRecords, nil
 
 }
 
-func (r *blogRepository) GetByAuthor(ctx context.Context, authorID uint, limit, offset int) (*[]schema.Blog, error) {
-	// TODO implement me
-	panic("implement me")
+// GetBlogCount retrieves the total number of blogs
+func (repo *blogRepository) GetBlogCount(ctx context.Context) (int64, error) {
+	var count int64
+	query := `SELECT COUNT(*) FROM blogs`
+	err := repo.db.QueryRowContext(ctx, query).Scan(&count)
+	if err != nil {
+		repo.log.Errorf("Failed to fetch total blog count: %v", err)
+		return 0, fmt.Errorf("fetching total blog count: %w", err)
+	}
+	return count, nil
+}
+
+// GetBlogByID retrieves a blog by its ID.
+func (repo *blogRepository) GetBlogByID(ctx context.Context, blogId int64) (*schema.Blog, error) {
+	repo.log.Infof("Fetching blog by ID: %d", blogId)
+	query := `SELECT id, title, content, author_id, created_at, updated_at FROM blogs WHERE id = ?`
+	var blog schema.Blog
+
+	if err := repo.db.QueryRowContext(ctx, query, blogId).Scan(&blog.ID, &blog.Title, &blog.Content, &blog.AuthorID, &blog.CreatedAt, &blog.UpdatedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			repo.log.Warnf("Blog not found with ID: %d", blogId)
+			return nil, models.ErrBlogNotFound
+		}
+		repo.log.Errorf("Failed to scan blog: %v", err)
+		return nil, fmt.Errorf("fetching blog by ID: %w", err)
+	}
+	return &blog, nil
+}
+
+// UpdateBlog modifies an existing blog in the repository.
+func (repo *blogRepository) UpdateBlog(ctx context.Context, blog *schema.Blog) error {
+	repo.log.Infof("Updating blog: %+v", blog)
+	query := `UPDATE blogs SET title = ?, content = ?, author_id = ?, updated_at = ? WHERE id = ?`
+
+	_, err := repo.db.ExecContext(ctx, query, blog.Title, blog.Content, blog.AuthorID, time.Now(), blog.ID)
+	if err != nil {
+		repo.log.Errorf("Failed to update blog: %v", err)
+		return fmt.Errorf("updating blog: %w", err)
+	}
+	return nil
+}
+
+// DeleteBlog removes a blog from the repository.
+func (repo *blogRepository) DeleteBlog(ctx context.Context, blogId int64) error {
+	repo.log.Infof("Deleting blog with ID: %d", blogId)
+	query := `DELETE FROM blogs WHERE id = ?`
+
+	_, err := repo.db.ExecContext(ctx, query, blogId)
+	if err != nil {
+		repo.log.Errorf("Failed to delete blog: %v", err)
+		return fmt.Errorf("deleting blog: %w", err)
+	}
+	return nil
 }
